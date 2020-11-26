@@ -1,3 +1,4 @@
+use linkux_server::cli;
 use std::{env, process};
 
 fn main() {
@@ -7,4 +8,6 @@ fn main() {
         eprintln!("Application error: Linkus can only be run on Linux systems");
         process::exit(1);
     }
+
+    let config = cli::get_run_config();
 }
