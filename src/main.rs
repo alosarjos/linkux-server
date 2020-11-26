@@ -10,4 +10,9 @@ fn main() {
     }
 
     let config = cli::get_run_config();
+
+    if let Err(e) = linkux_server::run(config) {
+        eprintln!("Application error: {}", e);
+        process::exit(1);
+    }
 }
