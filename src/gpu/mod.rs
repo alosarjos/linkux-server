@@ -1,8 +1,12 @@
+mod status;
+mod temps;
+
+use status::Status;
 use std::{error::Error, path::Path, process::Command};
 
 #[derive(Debug)]
 pub struct GPU {
-    name: String,
+    pub name: String,
     file_path: String,
 }
 
@@ -19,12 +23,12 @@ impl GPU {
 
         Ok(GPU {
             name: GPU::get_gpu_name(),
-            file_path,
+            file_path: file_path.clone(),
         })
     }
 
     fn get_card_file_path(card_id: u32) -> String {
-        format!("/sys/class/drm/card{}/device", card_id)
+        format!("/sys/class/drm/card{}/device/", card_id)
     }
 
     fn get_gpu_name() -> String {
@@ -50,5 +54,9 @@ impl GPU {
         // TODO: Find a better way to get the GPU name from the substring, but since source
         // may change, it has low priority
         output[output.find("Device: ").unwrap() + 8..output.find(" (").unwrap()].to_string()
+    }
+
+    pub fn get_status(&self) -> Result<Status, Box<dyn Error>> {
+        Status::read_status(&format!("{}/hwmon/hwmon2/", self.file_path))
     }
 }
