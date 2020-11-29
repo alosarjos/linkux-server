@@ -1,17 +1,20 @@
-use actix_web::{get, App, HttpServer, Responder};
+use actix_web::{get, web, App, HttpResponse, HttpServer};
+
+use crate::{cli::Config, gpu::GPU};
 
 pub struct Server {
-    port: u32,
+    config: Config,
 }
 
 impl Server {
-    pub fn new(port: u32) -> Self {
-        Server { port }
+    pub fn new(config: Config) -> Self {
+        Server { config }
     }
 
     pub async fn run(&self) -> std::io::Result<()> {
-        let binding = format!("127.0.0.1:{}", self.port);
-        HttpServer::new(|| App::new().service(index))
+        let binding = format!("127.0.0.1:{}", self.config.server_port);
+        let gpu = GPU::new(self.config.gpu_card_id).unwrap();
+        HttpServer::new(move || App::new().data(gpu.clone()).service(index))
             .bind(binding)?
             .run()
             .await
@@ -19,6 +22,6 @@ impl Server {
 }
 
 #[get("/")]
-pub async fn index() -> impl Responder {
-    format!("Hello from Linkux Server!")
+pub fn index(gpu: web::Data<GPU>) -> HttpResponse {
+    HttpResponse::Ok().json(gpu.clone().get_status().unwrap())
 }

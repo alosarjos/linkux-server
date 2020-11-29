@@ -1,6 +1,7 @@
+use serde::Serialize;
 use std::{error::Error, fmt::Display, fs};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Temperatures {
     pub edge: f32,
     pub junction: f32,

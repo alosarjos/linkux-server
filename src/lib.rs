@@ -16,7 +16,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     println!("{}", current_status);
 
     actix_rt::System::new("Server thread").block_on(async move {
-        let server = Server::new(config.server_port);
+        let server = Server::new(config);
         server.run().await.unwrap();
     });
 

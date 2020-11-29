@@ -1,7 +1,8 @@
 use std::{error::Error, fmt::Display, fs};
 
 use super::temps::Temperatures;
-#[derive(Debug)]
+use serde::Serialize;
+#[derive(Debug, Serialize)]
 pub struct Status {
     voltage: f32,
     power_consumption: f32,

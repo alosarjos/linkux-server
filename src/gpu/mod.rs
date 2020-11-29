@@ -1,10 +1,11 @@
 mod status;
 mod temps;
 
+use serde::Serialize;
 use status::Status;
 use std::{error::Error, path::Path, process::Command};
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Clone)]
 pub struct GPU {
     pub name: String,
     file_path: String,
