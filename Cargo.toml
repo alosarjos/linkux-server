@@ -7,3 +7,7 @@ edition = "2018"
 [dependencies]
 # CLI Tools
 clap = "3.0.0-beta.2"
+
+# API Rest Server
+actix-web = "3"
+actix-rt = "1.1.1"
