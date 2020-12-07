@@ -1,50 +1,47 @@
 use serde::Serialize;
-use std::{error::Error, fmt::Display, fs};
+use std::{error::Error, fs};
 
-#[derive(Debug, Clone, Serialize)]
-pub struct Temperatures {
-    pub edge: f32,
-    pub junction: f32,
-    pub memory: f32,
+#[derive(Serialize, Clone)]
+pub struct GPUTemps {
+    pub edge: Option<f32>,
+    pub junction: Option<f32>,
+    pub memory: Option<f32>,
 }
 
-impl Temperatures {
-    pub fn read_temps(hwmon_path: &str) -> Result<Self, Box<dyn Error>> {
-        Ok(Temperatures {
-            edge: Temperatures::get_edge_temp(hwmon_path)?,
-            junction: Temperatures::get_junction_temp(hwmon_path)?,
-            memory: Temperatures::get_memory_temp(hwmon_path)?,
+#[derive(Clone)]
+pub struct GPUTempReader {
+    hwmon_path: String,
+}
+
+impl GPUTempReader {
+    pub fn new(hwmon_path: &str) -> Self {
+        GPUTempReader {
+            hwmon_path: hwmon_path.to_string(),
+        }
+    }
+
+    pub fn read_temps(&self) -> Option<GPUTemps> {
+        let edge =
+            GPUTempReader::read_temp_from_file(&format!("{}temp1_input", self.hwmon_path)).ok();
+        let junction =
+            GPUTempReader::read_temp_from_file(&format!("{}temp2_input", self.hwmon_path)).ok();
+        let memory =
+            GPUTempReader::read_temp_from_file(&format!("{}temp3_input", self.hwmon_path)).ok();
+
+        if edge.is_none() && junction.is_none() && memory.is_none() {
+            return None;
+        }
+
+        Some(GPUTemps {
+            edge,
+            junction,
+            memory,
         })
     }
 
-    fn get_edge_temp(hwmon_path: &str) -> Result<f32, Box<dyn Error>> {
-        let power_consuption_file_path = format!("{}temp1_input", hwmon_path);
-        let power_consuption_file_content = fs::read_to_string(power_consuption_file_path)?;
-        let power_consuption = power_consuption_file_content.trim().parse::<f32>()? / 1000.0;
-        Ok(power_consuption)
-    }
-
-    fn get_junction_temp(hwmon_path: &str) -> Result<f32, Box<dyn Error>> {
-        let power_consuption_file_path = format!("{}temp2_input", hwmon_path);
-        let power_consuption_file_content = fs::read_to_string(power_consuption_file_path)?;
-        let power_consuption = power_consuption_file_content.trim().parse::<f32>()? / 1000.0;
-        Ok(power_consuption)
-    }
-
-    fn get_memory_temp(hwmon_path: &str) -> Result<f32, Box<dyn Error>> {
-        let power_consuption_file_path = format!("{}temp3_input", hwmon_path);
-        let power_consuption_file_content = fs::read_to_string(power_consuption_file_path)?;
-        let power_consuption = power_consuption_file_content.trim().parse::<f32>()? / 1000.0;
-        Ok(power_consuption)
-    }
-}
-
-impl Display for Temperatures {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Edge: {}ºC, Junction: {}ºC, Memory: {}ºC",
-            self.edge, self.junction, self.memory
-        )
+    fn read_temp_from_file(file_path: &str) -> Result<f32, Box<dyn Error>> {
+        let file_content = fs::read_to_string(file_path)?;
+        let value = file_content.trim().parse::<f32>()? / 1000.0;
+        Ok(value)
     }
 }

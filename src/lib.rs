@@ -10,11 +10,8 @@ use gpu::GPU;
 use server::Server;
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    let gpu = GPU::new(config.gpu_card_id)?;
+    let gpu = GPU::new(&config.gpu_card_sys_path, None);
     println!("GPU: {}", gpu.name);
-    let current_status = gpu.get_status()?;
-    println!("{}", current_status);
-
     actix_rt::System::new("Server thread").block_on(async move {
         let server = Server::new(config);
         server.run().await.unwrap();
