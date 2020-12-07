@@ -1,6 +1,8 @@
 use crate::gpu::GPU;
 use std::{error::Error, fs, process::Command};
 
+use super::GPUPath;
+
 pub fn get_system_gpus() -> Option<Vec<GPU>> {
     let lspci_gpu_output = get_lspci_gpus().ok()?;
 
@@ -13,7 +15,7 @@ pub fn get_system_gpus() -> Option<Vec<GPU>> {
 
     for (lspci_path, gpu_name) in lspci_gpus {
         if let Some(gpu_file_path) = get_gpu_path_from_lspci_path(lspci_path) {
-            system_gpus.push(GPU::new(&gpu_file_path, Some(gpu_name)));
+            system_gpus.push(GPU::new(Some(gpu_name), GPUPath::new(&gpu_file_path, None)));
         }
     }
 

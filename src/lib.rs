@@ -6,12 +6,9 @@ use actix_rt;
 use std::error::Error;
 
 use cli::Config;
-use gpu::GPU;
 use server::Server;
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    let gpu = GPU::new(&config.gpu_card_sys_path, None);
-    println!("GPU: {}", gpu.name);
     actix_rt::System::new("Server thread").block_on(async move {
         let server = Server::new(config);
         server.run().await.unwrap();

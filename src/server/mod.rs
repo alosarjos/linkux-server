@@ -1,6 +1,6 @@
 use actix_web::{get, web, App, HttpResponse, HttpServer};
 
-use crate::gpu::status::GPUStatus;
+use crate::gpu::{status::GPUStatus, GPUPath};
 use crate::{cli::Config, gpu::GPU};
 use serde::Serialize;
 
@@ -15,7 +15,7 @@ impl Server {
 
     pub async fn run(&self) -> std::io::Result<()> {
         let binding = format!("127.0.0.1:{}", self.config.server_port);
-        let gpu = GPU::new(&self.config.gpu_card_sys_path, None);
+        let gpu = GPU::new(None, GPUPath::new(&self.config.gpu_card_sys_path, None));
         HttpServer::new(move || App::new().data(gpu.clone()).service(index))
             .bind(binding)?
             .run()

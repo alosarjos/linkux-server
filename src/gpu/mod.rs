@@ -7,6 +7,25 @@ use serde::Serialize;
 use status::{GPUStatus, GPUStatusReader};
 use std::process::Command;
 
+pub struct GPUPath {
+    pub file_path: String,
+    pub hwmon_path: String,
+}
+
+impl GPUPath {
+    pub fn new(file_path: &str, hwmon_path: Option<&str>) -> Self {
+        let hwmon_path = match hwmon_path {
+            Some(hwmon_path) => hwmon_path.to_string(),
+            None => format!("{}hwmon/hwmon2/", file_path),
+        };
+
+        GPUPath {
+            file_path: file_path.to_string(),
+            hwmon_path,
+        }
+    }
+}
+
 #[derive(Serialize, Clone)]
 pub struct GPU {
     pub name: String,
@@ -17,14 +36,16 @@ pub struct GPU {
 }
 
 impl GPU {
-    pub fn new(file_path: &str, name: Option<&str>) -> Self {
+    pub fn new(name: Option<&str>, gpu_path: GPUPath) -> Self {
+        let name = match name {
+            Some(name) => name.to_string(),
+            None => GPU::get_card_name(&gpu_path.file_path),
+        };
+
         GPU {
-            name: match name {
-                Some(name) => name.to_string(),
-                None => GPU::get_card_name(file_path),
-            },
-            file_path: file_path.to_string(),
-            status_reader: GPUStatusReader::new(&format!("{}hwmon/hwmon2/", file_path)),
+            name: name.to_string(),
+            file_path: gpu_path.file_path,
+            status_reader: GPUStatusReader::new(&gpu_path.hwmon_path),
         }
     }
 
