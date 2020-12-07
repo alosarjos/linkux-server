@@ -1,6 +1,8 @@
 use actix_web::{get, web, App, HttpResponse, HttpServer};
 
+use crate::gpu::status::GPUStatus;
 use crate::{cli::Config, gpu::GPU};
+use serde::Serialize;
 
 pub struct Server {
     config: Config,
@@ -23,5 +25,14 @@ impl Server {
 
 #[get("/")]
 pub fn index(gpu: web::Data<GPU>) -> HttpResponse {
-    HttpResponse::Ok().json(gpu.clone().get_status())
+    #[derive(Serialize)]
+    struct GPUInfo {
+        name: String,
+        status: GPUStatus,
+    }
+
+    HttpResponse::Ok().json(GPUInfo {
+        name: gpu.name.clone(),
+        status: gpu.get_status(),
+    })
 }

@@ -1,6 +1,6 @@
 pub mod utils;
 
-mod status;
+pub mod status;
 mod temps;
 
 use serde::Serialize;
@@ -41,7 +41,10 @@ impl GPU {
             .output()
             .expect("Could not launch udevadm command");
 
-        String::from_utf8(command.stdout).unwrap()
+        String::from_utf8(command.stdout)
+            .unwrap()
+            .trim()
+            .to_string()
     }
 
     pub fn get_status(&self) -> GPUStatus {
