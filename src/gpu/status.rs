@@ -36,7 +36,7 @@ impl GPUStatusReader {
         };
 
         let power_consumption =
-            match self.read_gpu_status_file(&&self.hwmon_path.join("power1_average")) {
+            match self.read_gpu_status_file(&self.hwmon_path.join("power1_average")) {
                 Ok(value) => Some(value),
                 Err(error) => {
                     eprintln!("Could not read power consumption value!\n{}", error);
@@ -44,7 +44,7 @@ impl GPUStatusReader {
                 }
             };
 
-        let fan_speed = match self.read_gpu_status_file(&&self.hwmon_path.join("fan1_input")) {
+        let fan_speed = match self.read_gpu_status_file(&self.hwmon_path.join("fan1_input")) {
             Ok(value) => Some(value),
             Err(error) => {
                 eprintln!("Could not read fan speed value!\n{}", error);
