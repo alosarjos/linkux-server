@@ -1,5 +1,5 @@
-use std::str::FromStr;
 use std::{error::Error, fs};
+use std::{path::PathBuf, str::FromStr};
 
 use super::temps::{GPUTempReader, GPUTemps};
 use serde::Serialize;
@@ -14,38 +14,56 @@ pub struct GPUStatus {
 
 #[derive(Clone)]
 pub struct GPUStatusReader {
-    hwmon_path: String,
+    hwmon_path: PathBuf,
     temps_reader: GPUTempReader,
 }
 
 impl GPUStatusReader {
-    pub fn new(hwmon_path: &str) -> Self {
+    pub fn new(hwmon_path: &PathBuf) -> Self {
         GPUStatusReader {
-            hwmon_path: hwmon_path.to_string(),
-            temps_reader: GPUTempReader::new(hwmon_path),
+            hwmon_path: hwmon_path.clone(),
+            temps_reader: GPUTempReader::new(&hwmon_path),
         }
     }
 
     pub fn read_status(&self) -> GPUStatus {
+        let voltage = match self.read_gpu_status_file(&self.hwmon_path.join("in0_input")) {
+            Ok(value) => Some(value),
+            Err(error) => {
+                eprintln!("Could not read voltage value!\n{}", error);
+                None
+            }
+        };
+
+        let power_consumption =
+            match self.read_gpu_status_file(&&self.hwmon_path.join("power1_average")) {
+                Ok(value) => Some(value),
+                Err(error) => {
+                    eprintln!("Could not read power consumption value!\n{}", error);
+                    None
+                }
+            };
+
+        let fan_speed = match self.read_gpu_status_file(&&self.hwmon_path.join("fan1_input")) {
+            Ok(value) => Some(value),
+            Err(error) => {
+                eprintln!("Could not read fan speed value!\n{}", error);
+                None
+            }
+        };
+
         GPUStatus {
-            voltage: self
-                .read_gpu_status_file(&format!("{}in0_input", self.hwmon_path))
-                .ok(),
-            power_consumption: self
-                .read_gpu_status_file(&format!("{}power1_average", self.hwmon_path))
-                .ok(),
-            fan_speed: self
-                .read_gpu_status_file(&format!("{}fan1_input", self.hwmon_path))
-                .ok(),
+            voltage,
+            power_consumption,
+            fan_speed,
             temps: self.temps_reader.read_temps(),
         }
     }
 
-    fn read_gpu_status_file<T>(&self, file_path: &str) -> Result<T, Box<dyn Error>>
+    fn read_gpu_status_file<T>(&self, file_path: &PathBuf) -> Result<T, Box<dyn Error>>
     where
         T: FromStr,
-        <T as FromStr>::Err: Error,
-        <T as FromStr>::Err: 'static,
+        <T as FromStr>::Err: Error + 'static,
     {
         let file_content = fs::read_to_string(file_path)?;
         let value = file_content.trim().parse::<T>()?;

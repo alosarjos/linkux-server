@@ -22,9 +22,10 @@ pub fn get_run_config() -> Config {
             let first_detected_gpu = system_gpus.first().unwrap();
             println!(
                 "Found GPU: {} at {}",
-                first_detected_gpu.name, first_detected_gpu.file_path
+                first_detected_gpu.name,
+                first_detected_gpu.file_path.to_str().unwrap()
             );
-            config.gpu_card_sys_path = first_detected_gpu.file_path.to_string();
+            config.gpu_card_sys_path = first_detected_gpu.file_path.to_str().unwrap().to_string();
         } else {
             panic!("No GPU was found on the system");
         }

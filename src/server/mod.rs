@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use actix_web::{get, web, App, HttpResponse, HttpServer};
 
 use crate::gpu::{status::GPUStatus, GPUPath};
@@ -15,7 +17,10 @@ impl Server {
 
     pub async fn run(&self) -> std::io::Result<()> {
         let binding = format!("127.0.0.1:{}", self.config.server_port);
-        let gpu = GPU::new(None, GPUPath::new(&self.config.gpu_card_sys_path, None));
+        let gpu = GPU::new(
+            None,
+            GPUPath::new(&PathBuf::from(&self.config.gpu_card_sys_path), None),
+        );
         HttpServer::new(move || App::new().data(gpu.clone()).service(index))
             .bind(binding)?
             .run()

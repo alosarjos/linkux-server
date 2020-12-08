@@ -1,5 +1,5 @@
 use crate::gpu::GPU;
-use std::{error::Error, fs, process::Command};
+use std::{error::Error, fs, path::PathBuf, process::Command};
 
 use super::GPUPath;
 
@@ -45,20 +45,20 @@ fn lspci_gpu_to_tuple(lspci_gpu: &str) -> (&str, &str) {
     (split_strings[0].trim(), split_strings[1].trim())
 }
 
-fn get_gpu_path_from_lspci_path(lspci_path: &str) -> Option<String> {
-    let mut gpu_path = String::from("/sys/bus/pci/devices");
+fn get_gpu_path_from_lspci_path(lspci_path: &str) -> Option<PathBuf> {
+    let mut gpu_path = PathBuf::from("/sys/bus/pci/devices");
 
     for suffix in lspci_path.split('/').collect::<Vec<&str>>() {
         if let Some(next_dir) = get_dir_by_suffix(&gpu_path, suffix) {
-            gpu_path = gpu_path + "/" + next_dir.file_name().to_str().unwrap();
+            gpu_path = gpu_path.join(next_dir.path());
         } else {
             return None;
         }
     }
-    Some(gpu_path + "/")
+    Some(gpu_path)
 }
 
-fn get_dir_by_suffix(path: &str, suffix: &str) -> Option<fs::DirEntry> {
+fn get_dir_by_suffix(path: &PathBuf, suffix: &str) -> Option<fs::DirEntry> {
     if let Ok(entries) = fs::read_dir(path) {
         for entry in entries {
             if let Ok(entry) = entry {

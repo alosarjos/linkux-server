@@ -5,35 +5,30 @@ mod temps;
 
 use serde::Serialize;
 use status::{GPUStatus, GPUStatusReader};
-use std::{fs, process::Command};
+use std::{fs, path::PathBuf, process::Command};
 
 pub struct GPUPath {
-    pub file_path: String,
-    pub hwmon_path: String,
+    pub file_path: PathBuf,
+    pub hwmon_path: PathBuf,
 }
 
 impl GPUPath {
-    pub fn new(file_path: &str, hwmon_path: Option<&str>) -> Self {
+    pub fn new(file_path: &PathBuf, hwmon_path: Option<&PathBuf>) -> Self {
         let hwmon_path = match hwmon_path {
-            Some(hwmon_path) => hwmon_path.to_string(),
-            None => format!(
-                "{}hwmon/{}/",
-                file_path,
-                GPUPath::find_hwmon_path(file_path).unwrap()
-            ),
+            Some(hwmon_path) => hwmon_path.clone(),
+            None => file_path
+                .join("hwmon/")
+                .join(GPUPath::find_hwmon_path(file_path).unwrap()),
         };
 
-        println!("{}", hwmon_path);
-
         GPUPath {
-            file_path: file_path.to_string(),
+            file_path: file_path.clone(),
             hwmon_path,
         }
     }
 
-    pub fn find_hwmon_path(file_path: &str) -> Option<String> {
-        let mut file_path = String::from(file_path);
-        file_path += "hwmon/";
+    pub fn find_hwmon_path(file_path: &PathBuf) -> Option<String> {
+        let file_path = file_path.join("hwmon/");
         if let Ok(entries) = fs::read_dir(file_path) {
             for entry in entries {
                 if let Ok(entry) = entry {
@@ -48,7 +43,7 @@ impl GPUPath {
 #[derive(Serialize, Clone)]
 pub struct GPU {
     pub name: String,
-    pub file_path: String,
+    pub file_path: PathBuf,
 
     #[serde(skip_serializing)]
     status_reader: GPUStatusReader,
@@ -68,10 +63,10 @@ impl GPU {
         }
     }
 
-    fn get_card_name(file_path: &str) -> String {
+    fn get_card_name(file_path: &PathBuf) -> String {
         let command = format!(
             "udevadm info -q property -p {} | grep ID_MODEL_FROM_DATABASE | cut -d '=' -f2 ",
-            file_path
+            file_path.to_str().unwrap()
         );
 
         let command = Command::new("sh")
