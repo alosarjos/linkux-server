@@ -5,7 +5,7 @@ mod temps;
 
 use serde::Serialize;
 use status::{GPUStatus, GPUStatusReader};
-use std::process::Command;
+use std::{fs, process::Command};
 
 pub struct GPUPath {
     pub file_path: String,
@@ -16,13 +16,32 @@ impl GPUPath {
     pub fn new(file_path: &str, hwmon_path: Option<&str>) -> Self {
         let hwmon_path = match hwmon_path {
             Some(hwmon_path) => hwmon_path.to_string(),
-            None => format!("{}hwmon/hwmon2/", file_path),
+            None => format!(
+                "{}hwmon/{}/",
+                file_path,
+                GPUPath::find_hwmon_path(file_path).unwrap()
+            ),
         };
+
+        println!("{}", hwmon_path);
 
         GPUPath {
             file_path: file_path.to_string(),
             hwmon_path,
         }
+    }
+
+    pub fn find_hwmon_path(file_path: &str) -> Option<String> {
+        let mut file_path = String::from(file_path);
+        file_path += "hwmon/";
+        if let Ok(entries) = fs::read_dir(file_path) {
+            for entry in entries {
+                if let Ok(entry) = entry {
+                    return Some(entry.file_name().to_str().unwrap().to_string());
+                }
+            }
+        }
+        None
     }
 }
 
