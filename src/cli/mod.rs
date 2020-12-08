@@ -10,7 +10,7 @@ pub struct Config {
     pub gpu_card_sys_path: String,
     /// Listening port for the API Rest server
     #[clap(short, long, default_value = "8080")]
-    pub server_port: u32,
+    pub server_port: u16,
 }
 
 pub fn get_run_config() -> Config {
