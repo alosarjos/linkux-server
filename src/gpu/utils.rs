@@ -15,7 +15,7 @@ pub fn get_system_gpus() -> Option<Vec<GPU>> {
 
     for (lspci_path, gpu_name) in lspci_gpus {
         if let Some(gpu_file_path) = get_gpu_path_from_lspci_path(lspci_path) {
-            system_gpus.push(GPU::new(Some(gpu_name), GPUPath::new(&gpu_file_path, None)));
+            system_gpus.push(GPU::new_with_name(&GPUPath::new(&gpu_file_path), gpu_name));
         }
     }
 

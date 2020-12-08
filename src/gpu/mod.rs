@@ -13,13 +13,10 @@ pub struct GPUPath {
 }
 
 impl GPUPath {
-    pub fn new(file_path: &PathBuf, hwmon_path: Option<&PathBuf>) -> Self {
-        let hwmon_path = match hwmon_path {
-            Some(hwmon_path) => hwmon_path.clone(),
-            None => file_path
-                .join("hwmon/")
-                .join(GPUPath::find_hwmon_path(file_path).unwrap()),
-        };
+    pub fn new(file_path: &PathBuf) -> Self {
+        let hwmon_path = file_path
+            .join("hwmon")
+            .join(GPUPath::find_hwmon_path(file_path).unwrap());
 
         GPUPath {
             file_path: file_path.clone(),
@@ -27,8 +24,15 @@ impl GPUPath {
         }
     }
 
+    pub fn new_with_hwmon_path(file_path: &PathBuf, hwmon_path: &PathBuf) -> Self {
+        GPUPath {
+            file_path: file_path.clone(),
+            hwmon_path: hwmon_path.clone(),
+        }
+    }
+
     pub fn find_hwmon_path(file_path: &PathBuf) -> Option<String> {
-        let file_path = file_path.join("hwmon/");
+        let file_path = file_path.join("hwmon");
         if let Ok(entries) = fs::read_dir(file_path) {
             for entry in entries {
                 if let Ok(entry) = entry {
@@ -50,15 +54,18 @@ pub struct GPU {
 }
 
 impl GPU {
-    pub fn new(name: Option<&str>, gpu_path: GPUPath) -> Self {
-        let name = match name {
-            Some(name) => name.to_string(),
-            None => GPU::get_card_name(&gpu_path.file_path),
-        };
+    pub fn new(gpu_path: &GPUPath) -> Self {
+        GPU {
+            name: GPU::get_card_name(&gpu_path.file_path),
+            file_path: gpu_path.file_path.clone(),
+            status_reader: GPUStatusReader::new(&gpu_path.hwmon_path),
+        }
+    }
 
+    pub fn new_with_name(gpu_path: &GPUPath, name: &str) -> Self {
         GPU {
             name: name.to_string(),
-            file_path: gpu_path.file_path,
+            file_path: gpu_path.file_path.clone(),
             status_reader: GPUStatusReader::new(&gpu_path.hwmon_path),
         }
     }
