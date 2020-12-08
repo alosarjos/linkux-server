@@ -10,10 +10,6 @@ Compile with Rust:
 cargo build
 ```
 
-For now it requires the `glxinfo` program to be installed. It's been used temporally,
-to retrieve the GPU name.
-
-
 ## Usage
 
 Execute the compiled binary or by using cargo:
