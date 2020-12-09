@@ -5,7 +5,7 @@ mod temps;
 
 use serde::Serialize;
 use status::{GPUStatus, GPUStatusReader};
-use std::{fs, path::PathBuf, process::Command};
+use std::{error::Error, fs, path::PathBuf, process::Command};
 
 pub struct GPUPath {
     pub file_path: PathBuf,
@@ -55,8 +55,16 @@ pub struct GPU {
 
 impl GPU {
     pub fn new(gpu_path: &GPUPath) -> Self {
+        let name = match GPU::get_card_name(&gpu_path.file_path) {
+            Ok(value) => value,
+            Err(error) => {
+                eprintln!("Error retrieving the GPU name: {}", error);
+                "Unamed GPU".to_string()
+            }
+        };
+
         GPU {
-            name: GPU::get_card_name(&gpu_path.file_path),
+            name,
             file_path: gpu_path.file_path.clone(),
             status_reader: GPUStatusReader::new(&gpu_path.hwmon_path),
         }
@@ -70,7 +78,7 @@ impl GPU {
         }
     }
 
-    fn get_card_name(file_path: &PathBuf) -> String {
+    fn get_card_name(file_path: &PathBuf) -> Result<String, Box<dyn Error>> {
         let command = format!(
             "udevadm info -q property -p {} | grep ID_MODEL_FROM_DATABASE | cut -d '=' -f2 ",
             file_path.to_str().unwrap()
@@ -80,13 +88,9 @@ impl GPU {
             .arg("-c")
             .arg(command)
             .env("LANG", "en")
-            .output()
-            .expect("Could not launch udevadm command");
+            .output()?;
 
-        String::from_utf8(command.stdout)
-            .unwrap()
-            .trim()
-            .to_string()
+        Ok(String::from_utf8(command.stdout)?.trim().to_string())
     }
 
     pub fn get_status(&self) -> GPUStatus {
