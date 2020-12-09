@@ -2,6 +2,8 @@
 
 Linuks server is the process in charge of retrieving the GPU status data and server it through an API Rest server.
 
+<img src="./.github/example.gif" height="500" />
+
 ## Installation
 
 Compile with Rust:
